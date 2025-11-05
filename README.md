@@ -1,105 +1,52 @@
-Judul: Container & Kubernetes Security Assessment — Lab Dev (minikube/kind)
+<h1 align="center" id="title">k8s-security-assessment</h1>
 
-Ringkasan:
-Lakukan penilaian keamanan terhadap cluster Kubernetes pengembangan (lokal) untuk mengidentifikasi misconfiguration, privilege escalation, insecure container images, dan celah lain pada rantai supply (image → runtime → cluster). Penilaian berada dalam lingkungan lab yang kami sediakan; tidak boleh melakukan tes pada sistem produksi atau lingkungan pihak ketiga tanpa izin tertulis.
+<p align="center"><img src="https://socialify.git.ci/prasbara/k8s-security-assessment/image?language=1&amp;owner=1&amp;name=1&amp;stargazers=1&amp;theme=Light" alt="project-image"></p>
 
-Tujuan:
-1. Mengidentifikasi misconfigurasi K8s (RBAC, PSP/PSP-replacement, admission controllers).
-2. Menemukan container dengan privilege berlebih, CAP_DROP/CAP_ADD yang salah, atau filesystem writable.
-3. Memindai image untuk vuln (CVEs) dan secret hardcoded.
-4. Mengecek konfigurasi node & runtime (Docker/containerd) yang melemahkan keamanan.
-5. Menghasilkan laporan teknis + eksekutif, PoC non-destruktif, rekomendasi mitigasi.
+<p id="description">Proyek ini lahir murni karena gabut + lagi galau daripada nangis mending bikin cluster yang juga butuh pelukan. Hasil: minikube nangis juga tapi setidaknya CVE-nya aman dari patah hati. ❤️🛠️</p>
 
-Ruang lingkup (scope):
-- Cluster: minikube/kind yang disediakan di repo `infra/` (lihat manifests).
-- Target: semua namespace kecuali `kube-system` dan `kube-public` untuk tes invasif tertentu — namun scan non-invasif boleh di semua namespace.
-- Tools yang boleh dipakai: Trivy, kube-bench, kube-hunter, kubectl, docker, kubescape, Falco (sensor read-only), kubectl-trace (lab-only).
-- Durasi: 1 sprint (2 minggu lab), deliverable akhir: laporan + scripts + dashboard.
+<p align="center"><img src="https://img.shields.io/badge/ngoding-sambil_nangis-blueviolet" alt="shields"><img src="https://img.shields.io/badge/WARNING-APOCALYPSE-ff3300?style=for-the-badge" alt="shields"><img src="https://img.shields.io/badge/SECUREMODE-HARDENED_AF-003366" alt="shields"><img src="https://img.shields.io/badge/feeling-null-purple" alt="shields"></p>
 
-Aturan / Rules of Engagement:
-- Semua tindakan harus non-destruktif (jangan hapus resource, jangan escalate ke jaringan eksternal).
-- Simpan semua output scanner dan catatan langkah reproducible.
-- Untuk exploit PoC, gunakan container / pod yang dibuat sendiri di namespace `pentest-lab`.
-- Dilarang mengeksfiltrasi data nyata — gunakan test secrets / dummy file.
+<h2>🛠️ Installation Steps:</h2>
 
-Deliverables:
-1. Executive summary (bahasa Indonesia).
-2. Technical findings: daftar temuan, severity (CVSS jika relevan), langkah reproduksi, bukti (screenshots/log), dan rekomendasi mitigasi.
-3. PoC non-destruktif (script & manifest) di `poc/`.
-4. Scan output raw (folder `artifacts/`).
-5. Checklist remediation prioritas.
+<p>1. Create the Kubernetes Cluster</p>
 
-Keberhasilan / Acceptance criteria:
-- Minimum 90% coverage check list (lihat `checklists/basic.md`).
-- Teridentifikasi & terdokumentasi setidaknya 1 misconfig kritikal (atau alasan kenapa tidak ada).
-- Skrip scanning otomatis berjalan (`scripts/scan_all.sh`) dan menghasilkan `artifacts/report-summary.html`.
-
-Kontak & Escalation:
-- Project owner: &lt;nama&gt;
-- Email: &lt;email&gt;
-- Slack: #pentest-lab
-
----
-
-## Setup Instructions
-
-This project is a template for a Kubernetes security assessment. The configuration files have been populated with sample data to get you started.
-
-### 1. Create the Kubernetes Cluster
-
+```
 You can use either `kind` or `minikube` to create a local Kubernetes cluster.
-
-**Using kind:**
-
-```bash
-kind create cluster --config infra/kind-cluster.yaml
 ```
 
-**Using minikube:**
+<p>2. Build the Vulnerable Docker Image</p>
 
-```bash
-minikube start
+```
+Navigate to the `poc/secret-in-image-demo` directory and build the Docker image
 ```
 
-### 2. Build the Vulnerable Docker Image
+<p>3. Deploy the Vulnerable Application</p>
 
-Navigate to the `poc/secret-in-image-demo` directory and build the Docker image:
-
-```bash
-cd poc/secret-in-image-demo
-docker build -t vulnerable-image-with-secret:latest .
+```
+kubectl apply -f infra/manifests/pentest-namespace.yaml kubectl apply -f infra/manifests/vulnerable-app/deployment.yaml kubectl apply -f infra/manifests/vulnerable-app/service.yaml
 ```
 
-Load the image into your kind cluster:
+<p>4. Run the Security Scans</p>
 
-```bash
-kind load docker-image vulnerable-image-with-secret:latest
+```
+ow you can run the security scans using the provided scripts in the `scans` directory.
 ```
 
-If you are using minikube, you can use the following command:
+<h2>🍰 Contribution Guidelines:</h2>
 
-```bash
-minikube image load vulnerable-image-with-secret:latest
-```
+Pedoman kontribusi ini disusun untuk menjaga keteraturan dan nilai akademis dalam proyek yang berawal dari rasa iseng dan sedikit galau. Sebagian besar kode dalam proyek ini dihasilkan oleh kecerdasan buatan (AI) sementara penulis berperan dalam memaksimalkan menguji serta menyesuaikannya agar tetap sesuai dengan kaidah penelitian ilmiah di bidang keamanan sistem informasi. Walaupun prosesnya tidak sepenuhnya konvensional pendekatan ini mencerminkan integrasi antara kreativitas personal dan metodologi akademis. Kontributor dipersilakan memberikan saran kritik membangun atau pembenahan teknis yang bersifat objektif. Mohon hindari bentuk hujatan karena tujuan utama proyek ini bukan kesempurnaan melainkan eksplorasi dan validasi pembelajaran. Setiap masukan yang memperkuat aspek traceability keamanan dan dokumentasi akan sangat dihargai dalam semangat kolaborasi terbuka.
 
-### 3. Deploy the Vulnerable Application
+  
+  
+<h2>💻 Built with</h2>
 
-Apply the manifests to deploy the vulnerable application and the pentest namespace:
+Technologies used in the project:
 
-```bash
-kubectl apply -f infra/manifests/pentest-namespace.yaml
-kubectl apply -f infra/manifests/vulnerable-app/deployment.yaml
-kubectl apply -f infra/manifests/vulnerable-app/service.yaml
-```
+*   Trivy
+*   Falco
+*   Artifacts / report
+*   Kubernetes
 
-### 4. Run the Security Scans
+<h2>💖Like my work?</h2>
 
-Now you can run the security scans using the provided scripts in the `scans` directory.
-
-For example, to run `kube-hunter`, you can run the following command:
-
-```bash
-.\scans\kube-hunter\run-kube-hunter.sh
-```
-
-This will save the output to `artifacts/raw/kube-hunter_output.txt`.
+Sebagai catatan dukungan meskipun bersifat opsional kami mengundang pemangku kepentingan untuk menyediakan dukungan teknis dan administratif yang relevan. Di tengah keheningan laboratorium yang kadang terasa sepi dan melelahkan setiap bentuk bantuan terarah (kontak personel akses sumber daya atau alokasi waktu) akan sangat meringankan beban analisis meningkatkan reproducibility dan mempercepat penyelesaian penilaian ini.
